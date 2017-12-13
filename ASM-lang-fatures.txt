@@ -1,0 +1,12 @@
+Nume: Mihai Petru 
+Grupa: II B4
+
+Convertor din "IMP" in limbaj de asamblare pentru NASM.
+Comanda: krun --output none test.asm > test.s && nasm -f elf64 -o test.o test.s && gcc -no-pie -o test test.o && ./test
+
+- Declaratie functii si variabile globale
+- Declaratii constante
+- Operatii aritmetice si asignari
+- Afisare text si variabile
+- Citire variabile
+- Apel de functii (parametrii transmisi prin valoare)
