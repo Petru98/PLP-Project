@@ -870,9 +870,10 @@ module ASMINSTR
          <strs> Strs </strs>
          when notBool("%lld" in keys(Strs))
 
-    rule <k> (___asmread() => ___asmmov("rdi", L) ~> ___asmmov("rsi", "rsp") ~> ___asmsub("rsi", sizeof(int))
-                           ~> ___asmxor("rax", "rax") ~> ___printasmout("        call scanf\n")
-                           ~> ___asmmov("rax", "[rsp - " +String Int2String(sizeof(int)) +String "]") ~> ___lastresult) ...</k>
+    rule <k> (___asmread() => ___asmmov("rdi", L)       ~> ___asmadd("rsp", "(-" +String Int2String(sizeof(int)) +String ")")
+                           ~> ___asmmov("rsi", "rsp")   ~> ___asmxor("rax", "rax") ~> ___printasmout("        call scanf\n")
+                           ~> ___asmmov("rax", "[rsp]") ~> ___asmadd("rsp", "(" +String Int2String(sizeof(int)) +String ")")
+                           ~> ___lastresult) ...</k>
          <strs>... ("%lld" |-> L:Id) ...</strs>
 
 

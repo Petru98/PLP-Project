@@ -1,5 +1,5 @@
 section .rodata
-    b: equ 12
+    b: equ 13
     a: equ 10
 
 section .data
@@ -17,11 +17,12 @@ global main
 
         sub  rsp, (16)
         mov  rdi, ___string0
+        add  rsp, (-8)
         mov  rsi, rsp
-        sub  rsi, 8
         xor  rax, rax
         call scanf
-        mov  rax, [rsp - 8]
+        mov  rax, [rsp]
+        add  rsp, (8)
         mov  [rbp - (8)], rax
         mov  rax, [z]
         mov  [rbp - (16)], rax

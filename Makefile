@@ -19,6 +19,7 @@ test.s: $(PROJECTNAME)-kompiled test.$(PROJECTNAME)
 
 $(PROJECTNAME)-kompiled: $(PROJECTNAME).k
 	kompile $(PROJECTNAME).k
+	@touch $(PROJECTNAME)-kompiled
 
 
 
