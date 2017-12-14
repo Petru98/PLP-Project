@@ -1,5 +1,5 @@
 int x, y, z = 6;
-const int a = 10, b = 12;
+const int a = 10, b = 13;
 
 function sum(int x, int y)
 {
