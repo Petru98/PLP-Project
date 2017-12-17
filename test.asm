@@ -14,8 +14,8 @@ function main()
     int x, y;
     x = read();
     y = z;
-    z = (x + y) * 2;
-    print("x = ", x, "\ny = ", y, "\nz = ", z, "\n(x + y) * 2 = ", (x + y) * 2, "\n");
+    z = ((x + y) * 3) / 2;
+    print("x = ", x, "\ny = ", y, "\nz = ", z, "\n((x + y) * 2) / 2 = ", ((x + y) * 2) / 2, "\n");
 
     {
         int s;

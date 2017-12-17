@@ -747,6 +747,14 @@ module FUNCTION-SCOPE
     rule LR:LastResult * Y:Id  => ___asmmul("rax", Y) ~> LR
     rule LR:LastResult * Y:Int => ___asmmul("rax", Y) ~> LR
 
+    rule X:Id  / Y:Id          => ___asmxor("rdx", "rdx") ~> ___asmmov("rax", X)     ~> ___asmdiv(Y)        ~> ___lastresult
+    rule X:Id  / Y:Int         => ___asmxor("rdx", "rdx") ~> ___asmmov("rax", X)     ~> ___asmmov("rbx", Y) ~> ___asmdiv("rbx") ~> ___lastresult
+    rule X:Id  / LR:LastResult => ___asmxor("rdx", "rdx") ~> ___asmmov("rbx", "rax") ~> ___asmmov("rax", X) ~> ___asmdiv("rbx") ~> LR
+    rule X:Int / Y:Id          => ___asmxor("rdx", "rdx") ~> ___asmmov("rax", X)     ~> ___asmdiv(Y)        ~> ___lastresult
+    rule X:Int / LR:LastResult => ___asmxor("rdx", "rdx") ~> ___asmmov("rbx", "rax") ~> ___asmmov("rax", X) ~> ___asmdiv("rbx") ~> LR
+    rule LR:LastResult / Y:Id  => ___asmxor("rdx", "rdx") ~> ___asmdiv(Y)            ~> LR
+    rule LR:LastResult / Y:Int => ___asmxor("rdx", "rdx") ~> ___asmmov("rbx", Y)     ~> ___asmdiv("rbx")    ~> LR
+
 
 
     // Print
@@ -1132,6 +1140,22 @@ module ASMINSTR
 
     rule <k> (___asmmul(X:String, Y:String) => .) ...</k>
          <asmout>... (.List => ListItem("        imul " +String X +String ", " +String Y +String "\n")) </asmout>
+
+
+
+    // Div
+    syntax KItem ::= "___asmdiv" "(" Id     ")"
+                   | "___asmdiv" "(" String ")"
+
+
+
+    // 64-bit integer
+    rule <k> (___asmdiv(X:Id) => .) ...</k>
+         <asmout>... (.List => ListItem("        idiv " +String AccessStr +String "\n")) </asmout>
+         <env>... (Y |-> ___varinfo(int, AccessStr:String, _)) ...</env>
+
+    rule <k> (___asmdiv(X:String) => .) ...</k>
+         <asmout>... (.List => ListItem("        idiv " +String X +String "\n")) </asmout>
 
 
 

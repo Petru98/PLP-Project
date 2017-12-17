@@ -28,10 +28,13 @@ global main
         mov  [rbp - (16)], rax
         mov  rax, [rbp - (8)]
         add  rax, [rbp - (16)]
-        imul rax, 2
+        imul rax, 3
+        xor  rdx, rdx
+        mov  rbx, 2
+        idiv rbx
         mov  [z], rax
-        mov  rdi, ___string1
-        mov  rsi, ___string2
+        mov  rdi, ___string2
+        mov  rsi, ___string1
         xor  rax, rax
         call printf
         mov  rax, [rbp - (8)]
@@ -39,7 +42,7 @@ global main
         mov  rsi, rax
         xor  rax, rax
         call printf
-        mov  rdi, ___string1
+        mov  rdi, ___string2
         mov  rsi, ___string3
         xor  rax, rax
         call printf
@@ -48,7 +51,7 @@ global main
         mov  rsi, rax
         xor  rax, rax
         call printf
-        mov  rdi, ___string1
+        mov  rdi, ___string2
         mov  rsi, ___string4
         xor  rax, rax
         call printf
@@ -57,18 +60,21 @@ global main
         mov  rsi, rax
         xor  rax, rax
         call printf
-        mov  rdi, ___string1
+        mov  rdi, ___string2
         mov  rsi, ___string5
         xor  rax, rax
         call printf
         mov  rax, [rbp - (8)]
         add  rax, [rbp - (16)]
         imul rax, 2
+        xor  rdx, rdx
+        mov  rbx, 2
+        idiv rbx
         mov  rdi, ___string0
         mov  rsi, rax
         xor  rax, rax
         call printf
-        mov  rdi, ___string1
+        mov  rdi, ___string2
         mov  rsi, ___string6
         xor  rax, rax
         call printf
@@ -78,7 +84,7 @@ global main
         call sum
         sub  rsp, (-16)
         mov  [rbp - (24)], rax
-        mov  rdi, ___string1
+        mov  rdi, ___string2
         mov  rsi, ___string7
         xor  rax, rax
         call printf
@@ -87,7 +93,7 @@ global main
         mov  rsi, rax
         xor  rax, rax
         call printf
-        mov  rdi, ___string1
+        mov  rdi, ___string2
         mov  rsi, ___string8
         xor  rax, rax
         call printf
@@ -99,7 +105,7 @@ global main
         mov  rsi, rax
         xor  rax, rax
         call printf
-        mov  rdi, ___string1
+        mov  rdi, ___string2
         mov  rsi, ___string6
         xor  rax, rax
         call printf
@@ -131,12 +137,12 @@ section .rodata
     ___string3: db `\ny = `, 0
     ___string8: db `\nsum(x,y) = `, 0
     ___string7: db `s = `, 0
-    ___string4: db `\nz = `, 0
+    ___string5: db `\n((x + y) * 2) / 2 = `, 0
     ___string6: db `\n`, 0
-    ___string5: db `\n(x + y) * 2 = `, 0
-    ___string2: db `x = `, 0
+    ___string1: db `x = `, 0
     ___string0: db `%lld`, 0
-    ___string1: db `%s`, 0
+    ___string2: db `%s`, 0
+    ___string4: db `\nz = `, 0
 
 extern printf
 extern scanf
