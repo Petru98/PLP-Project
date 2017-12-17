@@ -126,32 +126,37 @@ module FUNCTION-SCOPE-SYNTAX
 
 
 
-    syntax FunctionCall ::= "read" "(" ")"  [klabel(Read)]
-                          | Id "(" Exps ")" [klabel(Call)]
+    syntax FunctionCall ::= "read" "(" ")"  [klabel(read)]
+                          | Id "(" Exps ")" [klabel(call)]
 
-    syntax Exp ::= AExp | BExp | VarAssign | FunctionCall
     syntax Block ::= "{" Stmt "}"
 
 
 
-    syntax AExp ::= Int
-                  | Id
+    syntax Exp ::= Int
+                 | Id
+                 | BExp
+                 | VarAssign
 
-                  | FunctionCall
+                 | FunctionCall
 
-                  | "++" Id         [klabel(PreInc)]
-                  | Id "++"         [klabel(PostInc)]
+                 | "++" Id       [klabel(PreInc)]
+                 | Id "++"       [klabel(PostInc)]
+                 | "--" Id       [klabel(PreDec)]
+                 | Id "--"       [klabel(PostDec)]
 
-                  > left:
-                    AExp "*" AExp   [klabel(AMul), left, strict]
-                  | AExp "/" AExp   [klabel(ADiv), left, strict]
-                  | AExp "%" AExp   [klabel(AMod), left, strict]
+                 > left:
+                   Exp "*" Exp   [klabel(AMul), left, strict]
+                 | Exp "/" Exp   [klabel(ADiv), left, strict]
+                 | Exp "%" Exp   [klabel(AMod), left, strict]
 
-                  > left:
-                    AExp "+" AExp   [klabel(AAdd), left, strict]
-                  | AExp "-" AExp   [klabel(ASub), left, strict]
+                 > left:
+                   Exp "+" Exp   [klabel(AAdd), left, strict]
+                 | Exp "-" Exp   [klabel(ASub), left, strict]
 
-                  > "(" AExp ")"    [bracket]
+                 > "(" Exp ")"   [bracket]
+
+
 
     syntax BExp ::= Bool
                   | "!" BExp        [klabel(Not), left]
@@ -189,6 +194,8 @@ module FUNCTION-SCOPE-SYNTAX
 
                   | "print" "(" Exps ")" ";"                   [klabel(print)]
                   | "exit" "(" ")" ";"                         [klabel(exit)]
+
+                  | "halt" ";"                                 [klabel(halt)]
 
                   > Stmt Stmt                                  [klabel(Stmt_seq), right]
 endmodule
@@ -701,10 +708,15 @@ module FUNCTION-SCOPE
 
 
 
-    // Arithmetic
-    syntax AExp ::= AExp "+" LastResult [strict(1)] | LastResult "+" AExp [strict(2)]
-                  | AExp "-" LastResult [strict(1)] | LastResult "-" AExp [strict(2)]
+    // Increment / Decrement
+    rule ++ X:Id => ___asminc(X) ~> ___asmmov("rax", X) ~> ___lastresult
+    rule X:Id ++ => ___asmmov("rax", X) ~> ___asminc(X) ~> ___lastresult
+    rule -- X:Id => ___asmdec(X) ~> ___asmmov("rax", X) ~> ___lastresult
+    rule X:Id -- => ___asmmov("rax", X) ~> ___asmdec(X) ~> ___lastresult
 
+
+
+    // Arithmetic
     rule X:Int + Y:Int => X +Int Y
     rule X:Int - Y:Int => X -Int Y
     rule X:Int * Y:Int => X *Int Y
@@ -988,6 +1000,27 @@ module ASMINSTR
     rule <k> (___asmmov(X:String, Y:Id) => .) ...</k>
          <asmout>... (.List => ListItem("        mov  " +String X +String ", " +String AccessStr +String "\n")) </asmout>
          <env>... (Y |-> ___varinfo(char*, AccessStr:String, _)) ...</env>
+
+
+
+    // Inc / Dec
+    syntax KItem ::= "___asminc" "(" Id     ")"
+                   | "___asminc" "(" String ")"
+
+    rule <k> (___asminc(X:Id) => ___asminc("dword " +String AccessStr)) ...</k>
+         <env>... (X |-> ___varinfo(int, AccessStr:String, _)) ...</env>
+
+    rule <k> (___asminc(X:String) => ___printasmout("        inc  " +String X +String "\n")) ...</k>
+
+
+
+    syntax KItem ::= "___asmdec" "(" Id     ")"
+                   | "___asmdec" "(" String ")"
+
+    rule <k> (___asmdec(X:Id) => ___asmdec("dword " +String AccessStr)) ...</k>
+         <env>... (X |-> ___varinfo(int, AccessStr:String, _)) ...</env>
+
+    rule <k> (___asmdec(X:String) => ___printasmout("        inc  " +String X +String "\n")) ...</k>
 
 
 

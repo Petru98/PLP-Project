@@ -20,7 +20,8 @@ function main()
     {
         int s;
         s = sum(x, y);
-        print("s = ", s, "\nsum(x,y) = ", sum(x, y), "\n");
+        ++s;
+        print("s + 1 = ", s, "\nsum(x,y) = ", sum(x, y), "\n");
     }
 
     return z;
