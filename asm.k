@@ -739,15 +739,28 @@ module FUNCTION-SCOPE
     rule LR:LastResult - Y:Id  => ___asmsub("rax", Y) ~> LR
     rule LR:LastResult - Y:Int => ___asmsub("rax", Y) ~> LR
 
+    rule X:Id  * Y:Id          => ___asmmov("rax", X) ~> ___asmmul("rax", Y) ~> ___lastresult
+    rule X:Id  * Y:Int         => ___asmmov("rax", Y) ~> ___asmmul("rax", X) ~> ___lastresult
+    rule X:Id  * LR:LastResult => ___asmmul("rax", X) ~> LR
+    rule X:Int * Y:Id          => ___asmmov("rax", X) ~> ___asmmul("rax", Y) ~> ___lastresult
+    rule X:Int * LR:LastResult => ___asmmul("rax", X) ~> LR
+    rule LR:LastResult * Y:Id  => ___asmmul("rax", Y) ~> LR
+    rule LR:LastResult * Y:Int => ___asmmul("rax", Y) ~> LR
+
 
 
     // Print
     rule print(.Exps); => .
-    rule print(X:Id, Xs:Exps); => ___asmmov("rax", X) ~> print(___lastresult, Xs);
-    rule print(X:Int, Xs:Exps); => ___asmprint(X) ~> print(Xs);
-    rule print(X:String, Xs:Exps); => ___asmprint(X) ~> print(Xs);
-    rule print(LR:LastResult, Xs:Exps); => ___asmprint(LR) ~> print(Xs);
-    rule print(F:FunctionCall, Xs:Exps); => ___asmprint(F) ~> print(Xs);
+    rule print(X:Exp, Xs:Exps); => ___print(X) ~> print(Xs);
+
+
+
+    syntax KItem ::= "___print" "(" Exp ")" [strict]
+
+    rule ___print(X:Id)          => ___asmmov("rax", X) ~> ___print(___lastresult)
+    rule ___print(X:Int)         => ___asmprint(X)
+    rule ___print(X:String)      => ___asmprint(X)
+    rule ___print(LR:LastResult) => ___asmprint(LR)
 
 
 
@@ -1091,6 +1104,34 @@ module ASMINSTR
 
     rule <k> (___asmsub(X:String, Y:String) => ___error("___asmsub: Both operands are memory references")) ...</k>
          when (findChar(X, "[", 0) ==Int 0) andBool (findChar(Y, "[", 0) ==Int 0)
+
+
+
+    // Mul
+    syntax KItem ::= "___asmmul" "(" String "," Id     ")"
+                   | "___asmmul" "(" String "," Int    ")"
+                   | "___asmmul" "(" String "," String ")"
+
+
+
+    // 64-bit integer
+    rule <k> (___asmmul(X:String, Y:String) => ___error("___asmmul: Left operand is memory reference")) ...</k>
+         when (findChar(X, "[", 0) ==Int 0)
+    rule <k> (___asmmul(X:String, Y:Int)    => ___error("___asmmul: Left operand is memory reference")) ...</k>
+         when (findChar(X, "[", 0) ==Int 0)
+    rule <k> (___asmmul(X:String, Y:Id)     => ___error("___asmmul: Left operand is memory reference")) ...</k>
+         when (findChar(X, "[", 0) ==Int 0)
+
+
+    rule <k> (___asmmul(X:String, Y:Id) => .) ...</k>
+         <asmout>... (.List => ListItem("        imul " +String X +String ", " +String AccessStr +String "\n")) </asmout>
+         <env>... (Y |-> ___varinfo(int, AccessStr:String, _)) ...</env>
+
+    rule <k> (___asmmul(X:String, Y:Int) => .) ...</k>
+         <asmout>... (.List => ListItem("        imul " +String X +String ", " +String Int2String(Y) +String "\n")) </asmout>
+
+    rule <k> (___asmmul(X:String, Y:String) => .) ...</k>
+         <asmout>... (.List => ListItem("        imul " +String X +String ", " +String Y +String "\n")) </asmout>
 
 
 

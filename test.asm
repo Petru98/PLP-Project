@@ -14,14 +14,13 @@ function main()
     int x, y;
     x = read();
     y = z;
-    z = x + y;
-    print("x = ", x, "\ny = ", y, "\nz = ", z, "\n");
+    z = (x + y) * 2;
+    print("x = ", x, "\ny = ", y, "\nz = ", z, "\n(x + y) * 2 = ", (x + y) * 2, "\n");
 
     {
         int s;
         s = sum(x, y);
-        ++s;
-        print("s + 1 = ", s, "\nsum(x,y) = ", sum(x, y), "\n");
+        print("s = ", s, "\nsum(x,y) = ", sum(x, y), "\n");
     }
 
     return z;
