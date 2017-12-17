@@ -23,6 +23,11 @@ $(PROJECTNAME)-kompiled: $(PROJECTNAME).k
 
 
 
+debug: $(PROJECTNAME)-kompiled test.$(PROJECTNAME)
+	krun test.$(PROJECTNAME)
+
+
+
 nasm:
 	@nasm -f elf64 -o test.o test.s && gcc -no-pie -o test test.o
 
@@ -31,4 +36,4 @@ clean:
 
 
 
-.PHONY: all nasm clean
+.PHONY: all nasm clean debug

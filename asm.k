@@ -89,9 +89,9 @@ module GLOBAL-SCOPE-SYNTAX
 
 
 
-    syntax Exp   ::= Const
+    syntax Exp   ::= Const | Id
     syntax Block ::= "{""}"
-    syntax Exps  ::= List{Exp, ","} [klabel(Exps)/*, strict*/]
+    syntax Exps  ::= List{Exp, ","} [klabel(Exps)]
 
 
 
@@ -126,7 +126,10 @@ module FUNCTION-SCOPE-SYNTAX
 
 
 
-    syntax Exp ::= AExp | BExp | VarAssign
+    syntax FunctionCall ::= "read" "(" ")"  [klabel(Read)]
+                          | Id "(" Exps ")" [klabel(Call)]
+
+    syntax Exp ::= AExp | BExp | VarAssign | FunctionCall
     syntax Block ::= "{" Stmt "}"
 
 
@@ -134,11 +137,10 @@ module FUNCTION-SCOPE-SYNTAX
     syntax AExp ::= Int
                   | Id
 
+                  | FunctionCall
+
                   | "++" Id         [klabel(PreInc)]
                   | Id "++"         [klabel(PostInc)]
-
-                  | "read" "(" ")"  [klabel(Read)]
-                  | Id "(" Exps ")" [klabel(FunctionCall), strict(2)]
 
                   > left:
                     AExp "*" AExp   [klabel(AMul), left, strict]
@@ -522,10 +524,11 @@ module SECTION-TEXT
 
 
 
-    rule <k> (___convertfunction(F:Id, Ds:ParamDeclList, {B}:Block) => ___printasmoutlist(ListItem("global ") ListItem(F) ListItem("\n    ") ListItem(F) ListItem(":\n")
+    rule <k> (___convertfunction(F:Id, Ds:ParamDeclList, {B}:Block) => ___printasmoutlist(ListItem("global ") ListItem(F) ListItem("\n    ")
+                                                                                          ListItem(F) ListItem(":\n")
                                                                                           ListItem("        push rbp\n")
                                                                                           ListItem("        mov  rbp, rsp\n\n"))
-                                                                    ~> ___processparameters(-8, Ds)
+                                                                    ~> ___processparameters(-16, Ds)
                                                                     ~> B
                                                                     ~> ___returnfromfunction(0)
                                                                     ~> ___convertfunctionend)
@@ -537,9 +540,10 @@ module SECTION-TEXT
          <level> 0 => 1 </level>
          <currfuncname> . => F:Id </currfuncname>
 
-    rule <k> (___convertfunction(F:Id, Ds:ParamDeclList, {}:Block) => ___printasmoutlist(ListItem("global ") ListItem(F) ListItem("\n    ") ListItem(F) ListItem(":\n")
-                                                                                         ListItem("        ret\n\n"))
-                                                                   ~> ___returnfromfunction(0))
+    rule <k> (___convertfunction(F:Id, Ds:ParamDeclList, {}:Block) => ___printasmoutlist(ListItem("global ") ListItem(F) ListItem("\n    ")
+                                                                                         ListItem(F) ListItem(":\n")
+                                                                                         ListItem("        xor rax, rax\n")
+                                                                                         ListItem("        ret\n\n")))
          ...</k>
 
 
@@ -685,7 +689,7 @@ module FUNCTION-SCOPE
          <currfuncname> F:Id </currfuncname>
 
     rule <k> (T:Type .VarConstructList; => ___printasmoutlist(ListItem("        sub  rsp, (") ListItem(B) ListItem(")\n"))) ...</k>
-         <rsp> SP:Int ~> (B => 0) </rsp>
+         <rsp> SP:Int ~> (B:Int => 0) </rsp>
          <currfuncname> F:Id </currfuncname>
 
 
@@ -731,11 +735,17 @@ module FUNCTION-SCOPE
     rule print(X:Int, Xs:Exps); => ___asmprint(X) ~> print(Xs);
     rule print(X:String, Xs:Exps); => ___asmprint(X) ~> print(Xs);
     rule print(LR:LastResult, Xs:Exps); => ___asmprint(LR) ~> print(Xs);
+    rule print(F:FunctionCall, Xs:Exps); => ___asmprint(F) ~> print(Xs);
 
 
 
     // Read
     rule read() => ___asmread()
+
+
+
+    // Function call
+    rule F:Id(Xs:Exps) => ___asmfunccall(F, Xs) ~> ___lastresult
 endmodule
 
 
@@ -813,7 +823,6 @@ module ASMINSTR
 
     // Print
     syntax KItem ::= "___asmprint" "(" Exp ")" [klabel(___asmprint), strict]
-    syntax KItem ::= "___asmprint" "(" Id  ")" [klabel(___asmprint_id)]
 
 
 
@@ -875,6 +884,64 @@ module ASMINSTR
                            ~> ___asmmov("rax", "[rsp]") ~> ___asmadd("rsp", "(" +String Int2String(sizeof(int)) +String ")")
                            ~> ___lastresult) ...</k>
          <strs>... ("%lld" |-> L:Id) ...</strs>
+
+
+
+    // Function call
+    syntax KItem ::= "___asmcall" "(" Id ")" [klabel(___asmcall)]
+
+    rule <k> (___asmcall(F:Id) => ___printasmoutlist(ListItem("        call ") ListItem(F) ListItem("\n"))) ...</k>
+         <text>... (F |-> _) ...</text>
+
+
+
+    syntax KItem ::= "___asmfunccall" "(" Id "," Exps ")" [klabel(___asmfunccall)]
+
+    rule <k> (___asmfunccall(F:Id, .Exps) => ___asmcall(F)) ...</k>
+         <text>... (F |-> _) ...</text>
+         <rsp> SP:Int ~> 0 </rsp>
+
+    rule <k> (___asmfunccall(F:Id, .Exps) => ___asmcall(F) ~> ___asmsub("rsp", "(-" +String Int2String(B) +String")")) ...</k>
+         <text>... (F |-> _) ...</text>
+         <rsp> SP:Int ~> (B:Int => 0) </rsp>
+         when B =/=Int 0
+
+    rule <k> (___asmfunccall(F:Id, Xs:Exps) => ___asmpushparameterlist(Xs) ~> ___asmfunccall(F, .Exps)) ...</k>
+         <text>... (F |-> _) ...</text>
+
+
+
+    syntax KItem ::= "___asmpushparameterlist" "(" Exps ")" [klabel(___asmpushparameterlist)]
+
+    rule <k> (___asmpushparameterlist(.Exps) => .) ...</k>
+    rule <k> (___asmpushparameterlist(X:Exp, Xs:Exps) => ___asmpushparameterlist(Xs) ~> ___asmpushparameter(X)) ...</k>
+
+
+
+    syntax KItem ::= "___asmpushparameter" "(" Exp ")" [klabel(___asmpushparameter), strict]
+
+    rule <k> (___asmpushparameter(LR:LastResult) => ___asmpush("rax")) ...</k>
+         <rsp> SP:Int ~> (B:Int => B +Int sizeof(int)) </rsp>
+
+    rule <k> (___asmpushparameter(X:Int)         => ___asmpush(X)) ...</k>
+         <rsp> SP:Int ~> (B:Int => B +Int sizeof(int)) </rsp>
+
+    rule <k> (___asmpushparameter(X:Id)          => ___asmpush(X)) ...</k>
+         <rsp> SP:Int ~> (B:Int => B +Int sizeof(int)) </rsp>
+
+
+
+    // Push
+    syntax KItem ::= "___asmpush" "(" Id     ")" [klabel(___asmpush_id)]
+                   | "___asmpush" "(" Int    ")" [klabel(___asmpush_int)]
+                   | "___asmpush" "(" String ")" [klabel(___asmpush_string)]
+
+    rule <k> (___asmpush(X:Id)     => ___printasmout("        push qword " +String AccessStr +String "\n")) ...</k>
+         <env>... (X |-> ___varinfo(int, AccessStr:String, _)) ...</env>
+
+    rule <k> (___asmpush(X:Int)    => ___printasmout("        push " +String Int2String(X) +String "\n")) ...</k>
+
+    rule <k> (___asmpush(X:String) => ___printasmout("        push " +String X +String "\n")) ...</k>
 
 
 
