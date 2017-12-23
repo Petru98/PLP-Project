@@ -1151,7 +1151,7 @@ module ASMINSTR
 
     // 64-bit integer
     rule <k> (___asmdiv(X:Id) => .) ...</k>
-         <asmout>... (.List => ListItem("        idiv " +String AccessStr +String "\n")) </asmout>
+         <asmout>... (.List => ListItem("        idiv qword " +String AccessStr +String "\n")) </asmout>
          <env>... (Y |-> ___varinfo(int, AccessStr:String, _)) ...</env>
 
     rule <k> (___asmdiv(X:String) => .) ...</k>

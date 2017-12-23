@@ -1,8 +1,14 @@
-int x, y, z = 6;
-const int a = 10, b = 13;
+/*
+* 'int' is a 64-bit signed integer
+*/
+
+int x, y, z = 100; // You can only initializa global variables with a constant value
+const int a = 10, b = 13; // Constants can't be modified
 
 function f(int a)
-{}
+{
+    // All global variables are visible from here
+}
 
 function sum(int x, int y)
 {
@@ -11,17 +17,20 @@ function sum(int x, int y)
 
 function main()
 {
-    int x, y;
-    x = read();
-    y = z;
-    z = ((x + y) * 3) / 2;
-    print("x = ", x, "\ny = ", y, "\nz = ", z, "\n((x + y) * 2) / 2 = ", ((x + y) * 2) / 2, "\n");
+    int x, y; // Global x and y are shadowed in main
+
+    x = read(); // read int
+    y = read();
+    z = ((x * y) / z);
+
+    print("x = ", x, "\ny = ", y, "\nz = ", z, "\nx + y - z = ", x + y - z, "\n");
 
     {
-        int s;
-        s = sum(x, y);
-        print("s = ", s, "\nsum(x,y) = ", sum(x, y), "\n");
+        int s; // The memory allocated for s will be released at the end of block
+        s = sum(x, y); // Right now you can't initialize local variables when declaring them
+        print("s = ", s, "\nsum(a, b) = ", sum(a, b), "\n");
     }
 
-    return z;
+    // return value for the program
+    return 0;
 }
