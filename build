@@ -1,0 +1,3 @@
+#!/bin/bash
+
+kompile asmconv.k
